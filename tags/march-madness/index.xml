@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>R on Thomas Baker&#39;s Sports Data Blog</title>
-    <link>/categories/r/</link>
-    <description>Recent content in R on Thomas Baker&#39;s Sports Data Blog</description>
+    <title>march madness on Thomas Baker&#39;s Sports Data Blog</title>
+    <link>/tags/march-madness/</link>
+    <description>Recent content in march madness on Thomas Baker&#39;s Sports Data Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 23 Mar 2021 00:00:00 +0000</lastBuildDate><atom:link href="/categories/r/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 23 Mar 2021 00:00:00 +0000</lastBuildDate><atom:link href="/tags/march-madness/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Combining basketball knowledge with data analysis to fill out a March Madness bracket</title>
       <link>/2021/03/23/combining-basketball-knowledge-with-data-analysis-to-fill-out-a-march-madness-bracket/</link>
