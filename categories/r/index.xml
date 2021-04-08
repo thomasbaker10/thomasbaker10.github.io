@@ -8,11 +8,11 @@
     <language>en-us</language>
     <lastBuildDate>Tue, 23 Mar 2021 00:00:00 +0000</lastBuildDate><atom:link href="/categories/r/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Combining basketball knowledge with data analysis to fill out a March Madness bracket</title>
-      <link>/2021/03/23/combining-basketball-knowledge-with-data-analysis-to-fill-out-a-march-madness-bracket/</link>
+      <title>Combining basketball IQ &amp; data analysis to fill out a March Madness bracket</title>
+      <link>/2021/03/23/combining-basketball-iq-and-data-analysis-to-fill-out-a-march-madness-bracket/</link>
       <pubDate>Tue, 23 Mar 2021 00:00:00 +0000</pubDate>
       
-      <guid>/2021/03/23/combining-basketball-knowledge-with-data-analysis-to-fill-out-a-march-madness-bracket/</guid>
+      <guid>/2021/03/23/combining-basketball-iq-and-data-analysis-to-fill-out-a-march-madness-bracket/</guid>
       <description>This is how I filled out my 2021 March Madness bracket combining my own college basketball knowledge with a model I made using data analysis. To begin, I used the programming language R and loaded up 3 useful libraries. I also set the random seed to be 1016, for my favorite number 10 and the number of my favorite NHL player, Aleksander Barkov, 16.
 library(tidyverse) ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.</description>
     </item>
