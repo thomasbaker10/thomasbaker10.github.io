@@ -13,8 +13,8 @@
       <pubDate>Tue, 23 Mar 2021 00:00:00 +0000</pubDate>
       
       <guid>/2021/03/23/combining-basketball-knowledge-with-data-analysis-to-fill-out-a-march-madness-bracket/</guid>
-      <description>  I am writing about how I filled out my 2021 march madness bracket combining my own college basketball knowledge with a formula I made using data analysis.
-library(tidyverse) ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ── ## ✓ ggplot2 3.3.3 ✓ purrr 0.3.4 ## ✓ tibble 3.0.6 ✓ dplyr 1.0.4 ## ✓ tidyr 1.1.2 ✓ stringr 1.4.0 ## ✓ readr 1.4.0 ✓ forcats 0.5.1 ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ── ## x dplyr::filter() masks stats::filter() ## x dplyr::lag() masks stats::lag() </description>
+      <description>This is how I filled out my 2021 March Madness bracket combining my own college basketball knowledge with a model I made using data analysis. To begin, I used the programming language R and loaded up 3 useful libraries. I also set the random seed to be 1016, for my favorite number 10 and the number of my favorite NHL player, Aleksander Barkov, 16.
+library(tidyverse) ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.</description>
     </item>
     
     <item>

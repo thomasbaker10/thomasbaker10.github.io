@@ -62,7 +62,7 @@
 
   <article class="article">
     
-    <span class="article-duration">1 min read</span>
+    <span class="article-duration">10 min read</span>
     
 
     <h1 class="article-title">Combining basketball knowledge with data analysis to fill out a March Madness bracket</h1>
@@ -76,7 +76,7 @@
 <script src="/2021/03/23/combining-basketball-knowledge-with-data-analysis-to-fill-out-a-march-madness-bracket/index_files/header-attrs/header-attrs.js"></script>
 
 
-<p>I am writing about how I filled out my 2021 march madness bracket combining my own college basketball knowledge with a formula I made using data analysis.</p>
+<p>This is how I filled out my 2021 March Madness bracket combining my own college basketball knowledge with a model I made using data analysis. To begin, I used the programming language R and loaded up 3 useful libraries. I also set the random seed to be 1016, for my favorite number 10 and the number of my favorite NHL player, Aleksander Barkov, 16.</p>
 <pre class="r"><code>library(tidyverse)</code></pre>
 <pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──</code></pre>
 <pre><code>## ✓ ggplot2 3.3.3     ✓ purrr   0.3.4
@@ -86,6 +86,160 @@
 <pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(tidymodels)</code></pre>
+<pre><code>## ── Attaching packages ────────────────────────────────────── tidymodels 0.1.2 ──</code></pre>
+<pre><code>## ✓ broom     0.7.4      ✓ recipes   0.1.15
+## ✓ dials     0.0.9      ✓ rsample   0.0.8 
+## ✓ infer     0.5.4      ✓ tune      0.1.2 
+## ✓ modeldata 0.1.0      ✓ workflows 0.2.1 
+## ✓ parsnip   0.1.5      ✓ yardstick 0.0.7</code></pre>
+<pre><code>## ── Conflicts ───────────────────────────────────────── tidymodels_conflicts() ──
+## x scales::discard() masks purrr::discard()
+## x dplyr::filter()   masks stats::filter()
+## x recipes::fixed()  masks stringr::fixed()
+## x dplyr::lag()      masks stats::lag()
+## x yardstick::spec() masks readr::spec()
+## x recipes::step()   masks stats::step()</code></pre>
+<pre class="r"><code>library(zoo)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;zoo&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     as.Date, as.Date.numeric</code></pre>
+<pre class="r"><code>set.seed(1016)</code></pre>
+<p>First, I had to decide what to use as predictors for the model. The legendary Kenpom has long been emphasizing the importance of possessions, so I knew I wanted to use those as well as a points per possession average. I used the basic formula for calculating those, and then also added in offensive and defensive ratings for each team. Then I calculated the rolling mean for possessions and points per possession, which just means that I am using the average number of possessions and points per possession over each team’s last 10 games. I thought 10 was a solid number because I would be able to get a good look at what teams were getting hot in March leading up to the tournament. I then used cumulative mean for the offensive and defensive ratings, meaning that I am looking at each team’s offensive and defensive ratings for the entire season. Lastly, I had to mutate my dataframe to avoid any game errors because the dataset I used labeled games that went to overtime differently, so I wanted to make sure they are all just labeled as wins or losses so that the model doesn’t leave out a game.</p>
+<pre class="r"><code>games &lt;- read_csv(&quot;~/Box/Advanced Sports Data/cbblogs1521 end reg szn).csv&quot;) %&gt;% mutate(
+  Possessions = .5*(TeamFGA - TeamOffRebounds + TeamTurnovers + (.475 * TeamFTA)) + .5*(OpponentFGA - OpponentOffRebounds + OpponentTurnovers + (.475 * OpponentFTA)),
+  OffensiveRating = (TeamScore/Possessions)*100, 
+  DefensiveRating = (OpponentScore/Possessions)*100,
+  TeamPPP = TeamScore/Possessions
+  ) %&gt;%
+  group_by(Team, Season) %&gt;%
+  mutate(
+  Rolling_Mean_Possessions = rollmean(lag(Possessions,n=1), k = 10, fill=Possessions),
+  Rolling_Mean_PPP = rollmean(lag(TeamPPP,n=1), k = 10, fill=TeamPPP),
+  Cumulative_Mean_Offensive = cummean(OffensiveRating),
+  Cumulative_Mean_Defensive = cummean(DefensiveRating)
+  ) %&gt;% ungroup() %&gt;% 
+  mutate(
+ Outcome = case_when(
+  grepl(&quot;W&quot;, W_L) ~ &quot;W&quot;, 
+  grepl(&quot;L&quot;, W_L) ~ &quot;L&quot;
+ )
+) %&gt;%
+  mutate(Outcome = as.factor(Outcome)) </code></pre>
+<p>For the next step I created a new dataframe selecting each of the metrics I wanted to use and leaving out all the rest from the original dataset. I also had some issues with certain teams having data listed as N/A, so I found the minimum numbers for each metric that any team had and simply filtered out any teams that would have had N/A so it would let me run the code later.</p>
+<pre class="r"><code>selectedgames &lt;- games %&gt;% select(Season, Team, Date, Opponent, Outcome, Cumulative_Mean_Offensive, Cumulative_Mean_Defensive, Rolling_Mean_Possessions, Rolling_Mean_PPP, TeamSRS, TeamSOS) %&gt;% filter(Cumulative_Mean_Offensive &gt; 0, Cumulative_Mean_Defensive &gt; 0, Rolling_Mean_Possessions &gt; 0, Rolling_Mean_PPP &gt; 0, TeamSRS &gt; -39, TeamSOS &gt; -18)</code></pre>
+<p>In order to make predictions, I had to matchup the teams’ metrics with their opponents and their respective metrics, so I created another dataframe and just changed the titles to opponent. I then joined the two dataframes so that I have one to use for the model.</p>
+<pre class="r"><code>opponentgames &lt;- selectedgames %&gt;% select(-Opponent) %&gt;% rename(Opponent = Team, Opponent_Cumulative_Offensive = Cumulative_Mean_Offensive, Opponent_Cumulative_Mean_Defensive = Cumulative_Mean_Defensive, Opponent_Rolling_Mean_Possessions = Rolling_Mean_Possessions, Opponent_Rolling_Mean_PPP = Rolling_Mean_PPP, OpponentSRS = TeamSRS, OpponentSOS = TeamSOS)
+
+bothsides &lt;- selectedgames %&gt;% left_join(opponentgames, by=c(&quot;Opponent&quot;, &quot;Date&quot;, &quot;Season&quot;)) %&gt;% na.omit() %&gt;% select(-Outcome.y) %&gt;% rename(Outcome = Outcome.x)</code></pre>
+<p>I began by splitting the model into testing and training data, using the standard 80-20 ratio. Basically the training data set is what will build the model, and the testing data set is what I will test that model on to see how well it works before applying it to the March Madness bracket.</p>
+<pre class="r"><code>log_split &lt;- initial_split(bothsides, prop = .8)
+log_train &lt;- training(log_split)
+log_test &lt;- testing(log_split)</code></pre>
+<p>Next up I created the recipe for the model, differentiating between which metrics are to be used as predictors of the outcome of the game and which are simply there for team identification.</p>
+<pre class="r"><code>log_recipe &lt;- 
+  recipe(Outcome ~ ., data = log_train) %&gt;% 
+  update_role(Team, Opponent, Date, Season, new_role = &quot;ID&quot;) %&gt;%
+  step_normalize(all_predictors())
+
+summary(log_recipe)</code></pre>
+<p>Now I start making the model using random forest.</p>
+<pre class="r"><code>log_mod &lt;- 
+  rand_forest() %&gt;% 
+  set_engine(&quot;ranger&quot;) %&gt;%
+  set_mode(&quot;classification&quot;)</code></pre>
+<p>Next I create the workflow for the model, adding in the recipe and model I just created.</p>
+<pre class="r"><code>log_workflow &lt;- 
+  workflow() %&gt;% 
+  add_model(log_mod) %&gt;% 
+  add_recipe(log_recipe)</code></pre>
+<p>And finally I fit the model to the training data. This will take a little while for my computer to run.</p>
+<pre class="r"><code>log_fit &lt;- 
+  log_workflow %&gt;% 
+  fit(data = log_train)</code></pre>
+<p>Now I bind the prediction to my training data.</p>
+<pre class="r"><code>trainpredict &lt;- log_fit %&gt;% predict(new_data = log_train) %&gt;%
+  bind_cols(log_train)
+
+trainpredict</code></pre>
+<p>And I set the prediction model to a probability type.</p>
+<pre class="r"><code>trainpredict &lt;- log_fit %&gt;% predict(new_data = log_train, type=&quot;prob&quot;) %&gt;%
+  bind_cols(trainpredict)
+
+trainpredict</code></pre>
+<p>Now I can see how it did with the training data by checking out the metrics. A 98.85% accuracy is pretty darn good, so I am happy with how this model turned out, however this is only training data so it will not be as accurate in real life.</p>
+<p>accuracy binary 0.9885241<br />
+kap binary 0.9770479</p>
+<pre class="r"><code>metrics(trainpredict, Outcome, .pred_class)</code></pre>
+<p>Next up, I take that training data and can create a colley matrix to see the breakdown of how it did. It’s pretty remarkable that it was just one false win prediction away from having an even amount of false wins and losses predictions (209), and either way the model was very successful in predicting both true wins (17,901) and true losses (18,019).</p>
+<pre class="r"><code>trainpredict %&gt;%
+  conf_mat(Outcome, .pred_class)</code></pre>
+<p>I can see how confident the model is in predicting wins here.</p>
+<p>roc_auc binary 0.0004357406</p>
+<pre class="r"><code>roc_auc(trainpredict, truth = Outcome, .pred_W)</code></pre>
+<p>And now the inverse should be true for predicting losses, of which it is extremely confident in predicting.</p>
+<p>roc_auc binary 0.9995643</p>
+<pre class="r"><code>roc_auc(trainpredict, truth = Outcome, .pred_L)</code></pre>
+<p>Now I repeat the process with the test data instead of the training to give the model a look at new data it hasn’t seen before.</p>
+<pre class="r"><code>testpredict &lt;- log_fit %&gt;% predict(new_data = log_test) %&gt;%
+  bind_cols(log_test)
+
+testpredict</code></pre>
+<pre class="r"><code>testpredict &lt;- log_fit %&gt;% predict(new_data = log_test, type=&quot;prob&quot;) %&gt;%
+  bind_cols(testpredict)
+
+testpredict</code></pre>
+<p>I expect a drop in accuracy whenever the model is applied to testing data instead of training. It was likely a bit overfitted, so that explains the drop from a near 99% accuracy to 72%, however that is still not bad. I’ll continue with it to see how it does in the real tournament.</p>
+<p>accuracy binary 0.7235495<br />
+kap binary 0.4471025</p>
+<pre class="r"><code>metrics(testpredict, Outcome, .pred_class)</code></pre>
+<p>To give an example, here’s what the model looks like for predictions for the play-in games. I create a tibble with each matchup aligned in a row, and then use the model to predict a percent outcome.</p>
+<pre class="r"><code>playin &lt;- tibble(
+  Team=&quot;Norfolk State&quot;,
+  Opponent=&quot;Appalachian State&quot;,
+  Date = as.Date(&quot;2021-03-19&quot;)
+) %&gt;% add_row(
+  Team=&quot;Wichita State&quot;,
+  Opponent=&quot;Drake&quot;,
+  Date = as.Date(&quot;2021-03-19&quot;)
+) %&gt;% add_row(
+  Team=&quot;Mount St. Mary&#39;s&quot;,
+  Opponent=&quot;Texas Southern&quot;,
+  Date = as.Date(&quot;2021-03-19&quot;)
+) %&gt;% add_row(
+  Team=&quot;Michigan State&quot;,
+  Opponent=&quot;UCLA&quot;,
+  Date = as.Date(&quot;2021-03-19&quot;)
+)</code></pre>
+<pre class="r"><code>playingames &lt;- selectedgames %&gt;% group_by(Team) %&gt;% filter(Date == max(Date)) %&gt;% select(-Date, -Opponent, -Outcome) %&gt;% right_join(playin)
+
+playingames &lt;- opponentgames %&gt;% group_by(Opponent) %&gt;% filter(Date == max(Date)) %&gt;% ungroup()  %&gt;% select(-Season, -Date, -Outcome) %&gt;% right_join(playingames, by=c(&quot;Opponent&quot;)) %&gt;% select(Team, everything())</code></pre>
+<pre class="r"><code>firstround &lt;- log_fit %&gt;% predict(new_data = playingames) %&gt;%
+  bind_cols(playingames) 
+
+log_fit %&gt;% predict(new_data = firstround, type=&quot;prob&quot;) %&gt;%
+  bind_cols(firstround)
+
+firstround %&gt;% select(Team, .pred_class, Opponent, .pred_L) %&gt;% 
+  gt() %&gt;% 
+  opt_row_striping() %&gt;% 
+  opt_table_lines(&quot;none&quot;) %&gt;% 
+  tab_style(
+    style = cell_borders(sides = c(&quot;top&quot;, &quot;bottom&quot;), 
+                         color = &quot;grey&quot;, weight = px(1)),
+    locations = cells_column_labels(everything())
+  )</code></pre>
+<p>Norfolk State | 0.5393349 L 0.4606651 | Appalachian State
+Wichita State | 0.4179611 W 0.5820389 | Drake
+Mount St. Mary’s | 0.4166722 W 0.5833278 | Texas Southern
+Michigan State | 0.7563500 L 0.2436500 | UCLA</p>
+<p>Here are the results. The way to read this is to take the first team listed and the percentage next to them as the model’s predicted chance of the result listed. For example, the model is 75.6% confident that Michigan State is going to lose to UCLA, which did happen. Now let’s here’s a summary of the model’s bracket:</p>
+<p>Jumping into the West region which was one of the best. The model did not see the Virginia-Ohio upset coming at all, however it had Creighton taking down UVA in the second round anyway. It nailed both the USC and Oregon upsets of Kansas and Iowa respectfully, so this was its best region. I actually picked Mizzou in the bracket because of Oklahoma’s guard being injured, which turned out to just add an incorrect pick since Oklahoma won anyway. The model predicts Gonzaga to take down USC in the Elite 8 and advance to the Final 4.</p>
+<p>The model didn’t do so hot in the East region. It totally missed on the UCLA upset of BYU and incorrectly leaned St Bonaventure over LSU. It did give Maryland and Abilene Christian good chances to win and pull the upset as they did, but incorrectly still leaned to the higher seeds. This is where overriding the model could have been useful, because it is showing the game as more of a toss up than expected so it could be worth it to try picking the upset in your own bracket. My bracket has Alabama over Michigan in the Elite 8, which I manually overrode from Michigan because it was almost a pick-em game and I am a big believer in the Crimson Tide this year, in addition to Michigan being without star player Isaiah Livers.</p>
+<p>In the South my model didn’t see the North Texas or Oral Roberts upset wins coming at all, however it leaned Villanova and Florida over the higher seeded Purdue and Ohio State respectfully, which helped the bracket score better overall because the second round games are worth more than the first, and not picking Ohio State as far as other brackets was a difference maker. Unfortunately, as a Villanova fan I overrode the model and picked Purdue because star player Collin Gillespie was injured late in the season and I didn’t believe in the Wildcats to make it that far, which backfired. The only other override I had was Arkansas over Colgate, which the model had as nearly a pick-em matchup anyway and with some basic research you could find that Colgate played half the games that most other schools did, and those games were made up of only 4-5 teams from their weak conference multiple times, so they were a decent team but their statistics were overrated. My model has Baylor over Arkansas in the Elite 8.</p>
+<p>As with most of the country, the Midwest region was a sh*tshow for my model bracket, as it only correctly picked one sweet 16 team, the #2 seed Houston. In fact the model had Tennessee and San Diego State making the second weekend, both of whom were upset in the first round. Overall the model picked a large amount of chalk, in particular it did in this region. There always seems to be one region each year that blows up and a low seed finds a way to the Final Four, it seems like that will be this region so this shouldn’t drag the model bracket down too far so long as the other regions clean up nice. The model had Illinois over Houston in the Elite 8, so already we have lost a Final Four team before reaching the second weekend, however with the amount of upsets this year I belive that is a common occurence with most brackets.</p>
 
     </div>
   </article>
