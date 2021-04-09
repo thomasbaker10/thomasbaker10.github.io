@@ -6,7 +6,17 @@
     <description>Recent content on Thomas Baker&#39;s Sports Data Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 23 Mar 2021 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Tue, 06 Apr 2021 00:00:00 +0000</lastBuildDate><atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>March Madness model bracket results</title>
+      <link>/2021/04/06/march-madness-model-bracket-results/</link>
+      <pubDate>Tue, 06 Apr 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/2021/04/06/march-madness-model-bracket-results/</guid>
+      <description>Now that this year’s tournament has officially come to an end, I am reflecting on how the bracket I filled out using data analysis turned out.
+Overall, the model did a pretty solid job. It correctly picked 41 out of 63 total tournament games, achieving 1130 out of a possible 1920 points. That may not sound great, but with all the upsets that occurred this year, the 1130 points put the bracket in the 94th percentile and a 916,000 rank on ESPN, out of around 15 million total brackets.</description>
+    </item>
+    
     <item>
       <title>Combining basketball IQ &amp; data analysis to fill out a March Madness bracket</title>
       <link>/2021/03/23/combining-basketball-iq-and-data-analysis-to-fill-out-a-march-madness-bracket/</link>

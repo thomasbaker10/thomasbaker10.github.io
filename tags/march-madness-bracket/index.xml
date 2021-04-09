@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>march madness bracket on Thomas Baker&#39;s Sports Data Blog</title>
+    <link>/tags/march-madness-bracket/</link>
+    <description>Recent content in march madness bracket on Thomas Baker&#39;s Sports Data Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 06 Apr 2021 00:00:00 +0000</lastBuildDate><atom:link href="/tags/march-madness-bracket/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>March Madness model bracket results</title>
+      <link>/2021/04/06/march-madness-model-bracket-results/</link>
+      <pubDate>Tue, 06 Apr 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/2021/04/06/march-madness-model-bracket-results/</guid>
+      <description>Now that this year’s tournament has officially come to an end, I am reflecting on how the bracket I filled out using data analysis turned out.
+Overall, the model did a pretty solid job. It correctly picked 41 out of 63 total tournament games, achieving 1130 out of a possible 1920 points. That may not sound great, but with all the upsets that occurred this year, the 1130 points put the bracket in the 94th percentile and a 916,000 rank on ESPN, out of around 15 million total brackets.</description>
+    </item>
+    
+  </channel>
+</rss>
